@@ -15,7 +15,7 @@ contract MarketPlace is Owned {
     
   }
 
-  
+  //mapping for land selling and buying
   mapping(uint => Land) public lands;
   uint landCounter;
   uint ethCounter=9183;
@@ -29,7 +29,7 @@ contract MarketPlace is Owned {
       isAllowToDisplay[_id]=true;
   }
   
-  //funtion to allow display
+  //funtion to disallow display
   function disallowToDisplay(uint _id) public
   {
       isAllowToDisplay[_id]=false;
@@ -40,16 +40,24 @@ contract MarketPlace is Owned {
     uint indexed _id,
     address indexed _seller,
     string _name,
-    uint256 _price);
+    uint256 _price
+    );
 
   event buyLandEvent(
     uint indexed _id,
     address indexed _seller,
     address indexed _buyer,
     string _name,
-    uint256 _price);
+    uint256 _price
+    );
 
-
+  event returnLandEvent(
+    uint indexed _id,
+    address indexed _seller,
+    address indexed _buyer,
+    string _name,
+    uint256 _price
+    );
   
   function sellLand(string _name, string _description, uint256 _price) public {
             // a new land
@@ -97,6 +105,29 @@ contract MarketPlace is Owned {
             }
             return (forSale);
   }
+  
+  //get Lands sold
+    function getLandsSold() public constant returns (uint[]) {
+            if(landCounter == 0) {
+                    return new uint[](0);
+            }
+        
+            uint[] memory landSoldIds = new uint[](landCounter);
+        
+            uint numberOfLandsSold = 0;
+            for (uint i = 1; i <= landCounter; i++) {
+              if (lands[i].buyer != 0x0) {
+                landSoldIds[numberOfLandsSold] = lands[i].id;
+                numberOfLandsSold++;
+              }
+            }
+        
+            uint[] memory forReturn = new uint[](numberOfLandsSold);
+            for (uint j = 0; j < numberOfLandsSold; j++) {
+              forReturn[j] = landSoldIds[j];
+            }
+            return (forReturn);
+  }
 
   function buyLand(uint _id) payable public {
             // we check whether there is at least one land
@@ -126,6 +157,33 @@ contract MarketPlace is Owned {
            
             emit buyLandEvent(_id, land.seller, land.buyer, land.name, land.price);
     }
+    
+    //funtion to return the land
+    function returnLand(uint _id) public {
+            // we check whether there is at least one land
+            require(landCounter > 0);
+        
+            // we check whether the land exists
+            require(_id > 0 && _id <= landCounter);
+        
+            // we retrieve the land
+            Land storage land = lands[_id];
+        
+            // we check whether the land has  already been sold the same person
+            require(land.buyer == msg.sender);
+        
+            // we don't allow the seller to buy his/her own land
+            //require(land.seller != msg.sender);
+        
+            // we check whether the value sent corresponds to the land price
+            //require(land.price == msg.value);
+            
+            // keep buyer's information
+            land.buyer = 0x0;
+        
+           
+            emit returnLandEvent(_id, land.seller, land.buyer, land.name, land.price);
+    } 
 
   //kill the smart contract
   function kill() public onlyOwner {
