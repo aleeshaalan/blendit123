@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity >=0.4.0 <0.6.0;
 
 import "./Owned.sol";
 
@@ -6,22 +6,28 @@ contract MarketPlace is Owned {
 
   // Custom types
   struct Land {
-    uint id;
-    address seller;
-    address buyer;
-    string name;
-    string description;
-    uint256 price;
+        uint id;
+        address payable seller;
+        address payable buyer;
+        string name;
+        string description;
+        uint256 price;
     
   }
 
-  //mapping for land selling and buying
+
+  //mapping land for selling and buying
   mapping(uint => Land) public lands;
   uint landCounter;
+  
+  
+  //set a static ether value in indian rupees
   uint ethCounter=9183;
+  
   
   //mapping to check whether to show land
   mapping(uint =>bool) public isAllowToDisplay;
+  
   
   //funtion to allow display
   function allowToDisplay(uint _id) public
@@ -29,37 +35,45 @@ contract MarketPlace is Owned {
       isAllowToDisplay[_id]=true;
   }
   
+  
   //funtion to disallow display
   function disallowToDisplay(uint _id) public
   {
       isAllowToDisplay[_id]=false;
   }
-
+  
+  
+  //check the value of owner 
+  function displayOwner() public view returns (address)
+  {
+      return owner;
+  }
+  
+  
   //events
   event sellLandEvent(
     uint indexed _id,
     address indexed _seller,
     string _name,
-    uint256 _price
-    );
+    uint256 _price);
 
   event buyLandEvent(
     uint indexed _id,
     address indexed _seller,
     address indexed _buyer,
     string _name,
-    uint256 _price
-    );
+    uint256 _price);
 
   event returnLandEvent(
     uint indexed _id,
     address indexed _seller,
     address indexed _buyer,
     string _name,
-    uint256 _price
-    );
+    uint256 _price);
   
-  function sellLand(string _name, string _description, uint256 _price) public {
+  
+  //selling land ,giving details of land
+  function sellLand(string memory _name, string memory _description, uint256 _price) public {
             // a new land
             landCounter++;
             _price=_price/ethCounter;
@@ -68,7 +82,7 @@ contract MarketPlace is Owned {
             lands[landCounter] = Land(
                 landCounter,
                 msg.sender,
-                0x0,
+                address(0),
                 _name,
                 _description,
                 _price
@@ -78,13 +92,15 @@ contract MarketPlace is Owned {
             emit sellLandEvent(landCounter, msg.sender, _name, _price);
   }
 
-  
-  function getNumberOfLands() public constant returns (uint) {
+
+  //function for getting number of lands in total
+  function getNumberOfLands() public view returns (uint) {
          return landCounter;
   }
 
   
-  function getLandsForSale() public constant returns (uint[]) {
+  //function for getting lands available for sale
+  function getLandsForSale() public view returns (uint[] memory) {
             if(landCounter == 0) {
               return new uint[](0);
             }
@@ -93,7 +109,7 @@ contract MarketPlace is Owned {
         
             uint numberOfLandsForSale = 0;
             for (uint i = 1; i <= landCounter; i++) {
-              if (lands[i].buyer == 0x0) {
+              if (lands[i].buyer == address(0)) {
                 landIds[numberOfLandsForSale] = lands[i].id;
                 numberOfLandsForSale++;
               }
@@ -106,8 +122,8 @@ contract MarketPlace is Owned {
             return (forSale);
   }
   
-  //get Lands sold
-    function getLandsSold() public constant returns (uint[]) {
+  //function for getting  Lands sold
+  function getLandsSold() public view returns (uint[] memory) {
             if(landCounter == 0) {
                     return new uint[](0);
             }
@@ -116,7 +132,7 @@ contract MarketPlace is Owned {
         
             uint numberOfLandsSold = 0;
             for (uint i = 1; i <= landCounter; i++) {
-              if (lands[i].buyer != 0x0) {
+              if (lands[i].buyer != address(0)) {
                 landSoldIds[numberOfLandsSold] = lands[i].id;
                 numberOfLandsSold++;
               }
@@ -128,7 +144,9 @@ contract MarketPlace is Owned {
             }
             return (forReturn);
   }
-
+  
+  
+  //function for buying Lands 
   function buyLand(uint _id) payable public {
             // we check whether there is at least one land
             require(landCounter > 0);
@@ -140,7 +158,7 @@ contract MarketPlace is Owned {
             Land storage land = lands[_id];
         
             // we check whether the land has not already been sold
-            require(land.buyer == 0x0);
+            require(land.buyer == address(0));
         
             // we don't allow the seller to buy his/her own land
             require(land.seller != msg.sender);
@@ -157,6 +175,7 @@ contract MarketPlace is Owned {
            
             emit buyLandEvent(_id, land.seller, land.buyer, land.name, land.price);
     }
+    
     
     //funtion to return the land
     function returnLand(uint _id) public {
@@ -179,9 +198,8 @@ contract MarketPlace is Owned {
             //require(land.price == msg.value);
             
             // keep buyer's information
-            land.buyer = 0x0;
+            land.buyer = address(0);
         
-           
             emit returnLandEvent(_id, land.seller, land.buyer, land.name, land.price);
     } 
 
