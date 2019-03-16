@@ -254,7 +254,7 @@ contract MarketPlace is Owned {
             
             
             //review a seller
-            function review(uint _id) public {
+            function review(uint _landId) public {
                     
                     uint count=0;
                     //check in lands whether he brought a land
@@ -263,7 +263,7 @@ contract MarketPlace is Owned {
                               
                               //check the seller address math with the land seller address and seller id with given id
                               for (uint j = 1; j <= sellerCount; j++){
-                                if ((lands[i].seller == seller[j].sellerAddress)&&(seller[j].id==_id)){
+                                if ((lands[i].seller == seller[j].sellerAddress)&&(seller[j].id==_landId)){
                                     
                                         seller[j].review++;
                                         count++;
@@ -277,7 +277,18 @@ contract MarketPlace is Owned {
                     }
             }
         
-        
+            //function to change price of a lands
+            function increasePrice(uint _landId,uint landPrice) public  {
+                for (uint i = 1; i <= landCounter; i++) {
+                    if ((lands[i].id == _landId)&&(lands[i].seller ==msg.sender))
+                    {
+                       landPrice=landPrice/ethCounter;
+                        lands[i].price = landPrice;
+                    }
+                }    
+            }
+            
+            
             //kill the smart contract
             function kill() public onlyOwner {
                      selfdestruct(owner);
